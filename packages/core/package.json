@@ -1,0 +1,39 @@
+{
+  "name": "@lumerisca/core",
+  "version": "0.1.0",
+  "description": "Core engine for Lumerisca - context collection, page mapping, RAG, and LLM client",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./context/*": {
+      "import": "./dist/context/*.js",
+      "types": "./dist/context/*.d.ts"
+    },
+    "./mapping/*": {
+      "import": "./dist/mapping/*.js",
+      "types": "./dist/mapping/*.d.ts"
+    },
+    "./rag/*": {
+      "import": "./dist/rag/*.js",
+      "types": "./dist/rag/*.d.ts"
+    },
+    "./llm/*": {
+      "import": "./dist/llm/*.js",
+      "types": "./dist/llm/*.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {}
+}

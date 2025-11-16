@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Lumerisca",
+  "description": "Page-aware AI assistant with scoped RAG and in-browser analysis",
+  "version": "0.1.0",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "serviceWorker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Lumerisca - AI Assistant",
+    "default_popup": "sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["sidepanel.html", "assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

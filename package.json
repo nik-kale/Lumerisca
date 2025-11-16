@@ -1,0 +1,28 @@
+{
+  "name": "lumerisca",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Page-aware AI assistant with scoped RAG and in-browser analysis",
+  "keywords": ["chrome-extension", "ai", "rag", "llm", "browser-assistant"],
+  "author": "Lumerisca Contributors",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:core": "pnpm --filter @lumerisca/core build",
+    "build:extension": "pnpm --filter @lumerisca/extension-chrome build",
+    "dev:extension": "pnpm --filter @lumerisca/extension-chrome dev",
+    "type-check": "pnpm -r type-check",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
