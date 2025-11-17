@@ -237,3 +237,15 @@ export {
 export type {
   ConversionOptions,
 } from "./converter/markdown.js";
+
+// Advanced AI & Multi-Model (v5.0)
+export {
+  ModelRouter,
+  routeToModel,
+} from "./models/modelRouter.js";
+export type {
+  ModelCapabilities,
+  TaskType,
+  RoutingOptions,
+  RoutingResult,
+} from "./models/modelRouter.js";
