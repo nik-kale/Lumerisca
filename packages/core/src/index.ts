@@ -81,3 +81,11 @@ export {
   formatError,
   extractErrorDetails,
 } from "./utils/errors.js";
+export {
+  performanceMonitor,
+  measured,
+  measureAsync,
+  measure,
+  logPerformanceSummary,
+} from "./utils/performance.js";
+export type { PerformanceMetric } from "./utils/performance.js";

@@ -98,4 +98,6 @@ export interface LLMConfig {
 export interface ExtensionSettings {
   llm: LLMConfig;
   pageMapUrl?: string;
+  customSystemPrompt?: string;
+  theme?: "dark" | "light";
 }

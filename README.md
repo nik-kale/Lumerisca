@@ -6,12 +6,37 @@ Lumerisca is a Chrome extension that provides intelligent, context-aware assista
 
 ## Features
 
+### Core Capabilities
 - **Page-Aware Context**: Automatically understands what page you're on
 - **Scoped RAG**: Uses only relevant documentation for each page pattern
 - **Multiple LLM Providers**: Works with OpenAI, Anthropic, and OpenRouter
 - **No Backend Required**: All processing happens in your browser
 - **Privacy-First**: Your API key stays local, never sent to any third party
 - **Smart Context Collection**: Extracts page title, URL, headings, and error messages
+
+### Phase 2 Features (v0.2.0)
+- ✨ **Enhanced Security**: Full input validation, rate limiting, automatic retry with exponential backoff
+- ⌨️ **Keyboard Shortcuts**: Ctrl+Shift+L (Cmd+Shift+L on Mac) to toggle panel
+- 💬 **Toast Notifications**: Real-time feedback for all actions
+- 📚 **Source Citations**: See which documents informed each answer
+- 📋 **Copy Messages**: One-click copy to clipboard
+- 🗑️ **Clear Conversation**: Start fresh with a single click
+- 💾 **Conversation History**: Per-tab conversation persistence
+- ⏳ **Loading States**: Beautiful loading animations and progress indicators
+
+### Phase 3 Features (v0.3.0)
+- 📖 **Comprehensive Documentation**: 100+ pages of user guides, API reference, security policy
+- 🤝 **Contributing Guide**: Clear guidelines for contributors
+- 🔐 **Security Policy**: Complete threat model and responsible disclosure
+- 📊 **Enhanced README**: All features documented with examples
+
+### Phase 4 Features (v0.4.0)
+- 🎨 **Dark/Light Theme**: Toggle between themes with one click
+- 💾 **Export Conversations**: Save conversations as JSON
+- ✍️ **Custom System Prompts**: Customize AI behavior for your use case
+- 🔍 **Enhanced Error Handling**: User-friendly error messages with actionable guidance
+- 📈 **Performance Monitoring**: Track response times and usage
+- 🛡️ **Zero Critical Vulnerabilities**: All Phase 1 security issues resolved (13/13 fixed)
 
 ## Architecture
 

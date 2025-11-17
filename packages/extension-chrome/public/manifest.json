@@ -36,5 +36,14 @@
       "resources": ["sidepanel.html", "assets/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-lumerisca": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
+      },
+      "description": "Toggle Lumerisca panel"
+    }
+  }
 }
