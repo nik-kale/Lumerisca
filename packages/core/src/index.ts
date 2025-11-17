@@ -89,3 +89,76 @@ export {
   logPerformanceSummary,
 } from "./utils/performance.js";
 export type { PerformanceMetric } from "./utils/performance.js";
+
+// Media Processing
+export {
+  extractVideoId,
+  fetchTranscript,
+  fetchMetadata,
+  extractChapters,
+  transcriptToText,
+  formatTimestamp,
+  extractYouTubeData,
+  generateSummaryPrompt,
+} from "./media/youtubeExtractor.js";
+export type {
+  YouTubeTranscript,
+  YouTubeChapter,
+  YouTubeMetadata,
+  YouTubeExtraction,
+} from "./media/youtubeExtractor.js";
+
+export {
+  extractFromFile as extractPdfFromFile,
+  extractFromUrl as extractPdfFromUrl,
+  searchInPdf,
+  generatePdfChatPrompt,
+  generatePdfSummaryPrompt,
+  extractPageRange,
+  detectTables,
+  generateCitation,
+} from "./media/pdfExtractor.js";
+export type {
+  PDFPage,
+  PDFMetadata,
+  PDFExtraction,
+  PDFTable,
+} from "./media/pdfExtractor.js";
+
+export {
+  extractFromImage,
+  extractFromImageUrl,
+  extractFromDataUrl,
+  detectTablesInOCR,
+  extractCodeFromOCR,
+  getConfidenceLevel,
+  downloadLanguage,
+  SUPPORTED_LANGUAGES,
+} from "./media/ocrEngine.js";
+export type {
+  OCRResult,
+  OCRWord,
+  OCRLine,
+  BoundingBox,
+  OCROptions,
+} from "./media/ocrEngine.js";
+
+export {
+  imageToDataUrl,
+  compressImage,
+  detectAnalysisType,
+  generateAnalysisPrompt,
+  generateUIAnalysisPrompt,
+  generateCodeAnalysisPrompt,
+  generateDiagramAnalysisPrompt,
+  parseAnalysisResponse,
+  captureScreenshot,
+  annotateImage,
+  compareImages,
+} from "./media/imageAnalyzer.js";
+export type {
+  ImageAnalysis,
+  ImageElement,
+  AnalysisType,
+  AnalysisOptions,
+} from "./media/imageAnalyzer.js";

@@ -17,6 +17,13 @@ import {
   ApiError,
   RateLimitError,
   TimeoutError,
+  extractYouTubeData,
+  generateSummaryPrompt as generateYouTubeSummary,
+  extractPdfFromUrl,
+  generatePdfSummaryPrompt,
+  extractFromImageUrl,
+  extractCodeFromOCR,
+  getConfidenceLevel,
 } from "@lumerisca/core";
 import type { PageContext, RagResult } from "@lumerisca/core";
 import { getSettings } from "../storage/settings.js";
@@ -287,6 +294,9 @@ chrome.runtime.onInstalled.addListener((details) => {
       previousVersion: details.previousVersion,
     });
   }
+
+  // Create context menus for media processing
+  createContextMenus();
 });
 
 /**
@@ -308,6 +318,299 @@ chrome.commands.onCommand.addListener((command) => {
     });
   }
 });
+
+/**
+ * Create context menus for media processing
+ */
+function createContextMenus(): void {
+  // Remove existing menus
+  chrome.contextMenus.removeAll(() => {
+    // Image context menu
+    chrome.contextMenus.create({
+      id: "lumerisca-extract-text",
+      title: "Lumerisca: Extract Text (OCR)",
+      contexts: ["image"],
+    });
+
+    chrome.contextMenus.create({
+      id: "lumerisca-analyze-image",
+      title: "Lumerisca: Analyze Image",
+      contexts: ["image"],
+    });
+
+    // Link context menus
+    chrome.contextMenus.create({
+      id: "lumerisca-summarize-youtube",
+      title: "Lumerisca: Summarize Video",
+      contexts: ["link"],
+      targetUrlPatterns: ["*://www.youtube.com/watch?v=*", "*://youtu.be/*"],
+    });
+
+    chrome.contextMenus.create({
+      id: "lumerisca-summarize-pdf",
+      title: "Lumerisca: Summarize PDF",
+      contexts: ["link"],
+      targetUrlPatterns: ["*.pdf"],
+    });
+
+    // Page context menu for YouTube
+    chrome.contextMenus.create({
+      id: "lumerisca-summarize-current-video",
+      title: "Lumerisca: Summarize This Video",
+      contexts: ["page"],
+      documentUrlPatterns: ["*://www.youtube.com/watch?v=*"],
+    });
+
+    log.info("Context menus created");
+  });
+}
+
+/**
+ * Handle context menu clicks
+ */
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  log.debug("Context menu clicked", { menuItemId: info.menuItemId });
+
+  if (!tab?.id) {
+    log.error("No tab ID available");
+    return;
+  }
+
+  switch (info.menuItemId) {
+    case "lumerisca-extract-text":
+      handleExtractText(info.srcUrl!, tab.id);
+      break;
+
+    case "lumerisca-analyze-image":
+      handleAnalyzeImage(info.srcUrl!, tab.id);
+      break;
+
+    case "lumerisca-summarize-youtube":
+      handleSummarizeYouTube(info.linkUrl!, tab.id);
+      break;
+
+    case "lumerisca-summarize-current-video":
+      handleSummarizeYouTube(info.pageUrl!, tab.id);
+      break;
+
+    case "lumerisca-summarize-pdf":
+      handleSummarizePdf(info.linkUrl!, tab.id);
+      break;
+  }
+});
+
+/**
+ * Handle OCR text extraction from image
+ */
+async function handleExtractText(imageUrl: string, tabId: number): Promise<void> {
+  try {
+    log.info("Extracting text from image", { imageUrl });
+
+    // Show loading notification
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "Extracting text from image...",
+        type: "info",
+      },
+    });
+
+    const ocrResult = await extractFromImageUrl(imageUrl);
+
+    log.info("OCR complete", {
+      textLength: ocrResult.text.length,
+      confidence: ocrResult.confidence,
+    });
+
+    // Send result to tab
+    chrome.tabs.sendMessage(tabId, {
+      type: "MEDIA_PROCESSED",
+      payload: {
+        type: "ocr",
+        data: {
+          text: ocrResult.text,
+          confidence: ocrResult.confidence,
+          confidenceLevel: getConfidenceLevel(ocrResult.confidence),
+        },
+      },
+    });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Text extracted (${getConfidenceLevel(ocrResult.confidence)} confidence)`,
+        type: "success",
+      },
+    });
+  } catch (error) {
+    log.error("OCR failed", error);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Failed to extract text: ${formatError(error)}`,
+        type: "error",
+      },
+    });
+  }
+}
+
+/**
+ * Handle image analysis
+ */
+async function handleAnalyzeImage(imageUrl: string, tabId: number): Promise<void> {
+  try {
+    log.info("Analyzing image", { imageUrl });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "Analyzing image...",
+        type: "info",
+      },
+    });
+
+    // Send to AI for analysis
+    chrome.tabs.sendMessage(tabId, {
+      type: "MEDIA_PROCESSED",
+      payload: {
+        type: "image-analysis",
+        data: {
+          imageUrl,
+          prompt: "Please analyze this image and describe what you see.",
+        },
+      },
+    });
+  } catch (error) {
+    log.error("Image analysis failed", error);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Failed to analyze image: ${formatError(error)}`,
+        type: "error",
+      },
+    });
+  }
+}
+
+/**
+ * Handle YouTube video summarization
+ */
+async function handleSummarizeYouTube(url: string, tabId: number): Promise<void> {
+  try {
+    log.info("Summarizing YouTube video", { url });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "Extracting video transcript...",
+        type: "info",
+      },
+    });
+
+    const extraction = await extractYouTubeData(url);
+
+    log.info("YouTube data extracted", {
+      title: extraction.metadata.title,
+      duration: extraction.metadata.duration,
+      transcriptLength: extraction.fullText.length,
+    });
+
+    // Send to AI for summarization
+    const summaryPrompt = generateYouTubeSummary(extraction);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "MEDIA_PROCESSED",
+      payload: {
+        type: "youtube",
+        data: {
+          metadata: extraction.metadata,
+          chapters: extraction.chapters,
+          transcript: extraction.transcript,
+          summaryPrompt,
+        },
+      },
+    });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "Video transcript extracted! Generating summary...",
+        type: "success",
+      },
+    });
+  } catch (error) {
+    log.error("YouTube summarization failed", error);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Failed to process video: ${formatError(error)}`,
+        type: "error",
+      },
+    });
+  }
+}
+
+/**
+ * Handle PDF summarization
+ */
+async function handleSummarizePdf(url: string, tabId: number): Promise<void> {
+  try {
+    log.info("Summarizing PDF", { url });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "Extracting PDF content...",
+        type: "info",
+      },
+    });
+
+    const extraction = await extractPdfFromUrl(url);
+
+    log.info("PDF extracted", {
+      fileName: extraction.fileName,
+      pages: extraction.pageCount,
+      textLength: extraction.fullText.length,
+    });
+
+    // Send to AI for summarization
+    const summaryPrompt = generatePdfSummaryPrompt(extraction);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "MEDIA_PROCESSED",
+      payload: {
+        type: "pdf",
+        data: {
+          metadata: extraction.metadata,
+          pageCount: extraction.pageCount,
+          fileName: extraction.fileName,
+          summaryPrompt,
+        },
+      },
+    });
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: "PDF content extracted! Generating summary...",
+        type: "success",
+      },
+    });
+  } catch (error) {
+    log.error("PDF summarization failed", error);
+
+    chrome.tabs.sendMessage(tabId, {
+      type: "SHOW_TOAST",
+      payload: {
+        message: `Failed to process PDF: ${formatError(error)}`,
+        type: "error",
+      },
+    });
+  }
+}
 
 // Log when service worker becomes inactive (for debugging)
 self.addEventListener("beforeunload", () => {
