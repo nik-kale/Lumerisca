@@ -208,3 +208,32 @@ export type {
   RelationType,
   GraphQuery,
 } from "./graph/knowledgeGraph.js";
+
+// Productivity & Integrations (v4.0)
+export {
+  TaskManager,
+  extractTasksFromText,
+} from "./productivity/taskManager.js";
+export type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskFilter,
+} from "./productivity/taskManager.js";
+
+export {
+  htmlToMarkdown,
+  markdownToPlainText,
+  htmlToPlainText,
+  extractHeadings,
+  generateTableOfContents,
+  countWords,
+  estimateReadingTime,
+  extractLinks,
+  extractImages,
+  formatCodeBlock,
+  createTable,
+} from "./converter/markdown.js";
+export type {
+  ConversionOptions,
+} from "./converter/markdown.js";
