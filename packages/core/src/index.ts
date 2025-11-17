@@ -162,3 +162,49 @@ export type {
   AnalysisType,
   AnalysisOptions,
 } from "./media/imageAnalyzer.js";
+
+// Advanced Search (v3.0)
+export {
+  BM25,
+  bm25Search,
+} from "./search/bm25.js";
+export type {
+  BM25Document,
+  BM25Result,
+  BM25Params,
+} from "./search/bm25.js";
+
+export {
+  HybridSearch,
+  hybridSearch,
+  ragSourceToHybridDoc,
+} from "./search/hybridSearch.js";
+export type {
+  HybridSearchDocument,
+  HybridSearchResult,
+  HybridSearchOptions,
+} from "./search/hybridSearch.js";
+
+export {
+  SemanticChunker,
+  chunkText,
+  chunkDocuments,
+} from "./rag/semanticChunker.js";
+export type {
+  Chunk,
+  ChunkMetadata,
+  ChunkingOptions,
+} from "./rag/semanticChunker.js";
+
+export {
+  KnowledgeGraph,
+  extractEntities,
+} from "./graph/knowledgeGraph.js";
+export type {
+  Entity,
+  Mention,
+  Relationship,
+  EntityType,
+  RelationType,
+  GraphQuery,
+} from "./graph/knowledgeGraph.js";
