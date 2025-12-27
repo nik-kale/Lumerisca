@@ -101,3 +101,18 @@ export interface ExtensionSettings {
   customSystemPrompt?: string;
   theme?: "dark" | "light";
 }
+
+/**
+ * Conversation history entry
+ */
+export interface Conversation {
+  id: string;
+  title?: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessage[];
+  context: {
+    url: string;
+    title: string;
+  };
+}

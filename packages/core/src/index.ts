@@ -239,6 +239,7 @@ export {
 export type {
   ConversionOptions,
 } from "./converter/markdown.js";
+export { ConversationExporter } from "./converter/conversationExporter.js";
 
 // Advanced AI & Multi-Model (v5.0)
 export {
