@@ -18,6 +18,9 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://cdn.jsdelivr.net; object-src 'self'; connect-src 'self' https://api.openai.com https://api.anthropic.com https://openrouter.ai https://www.youtube.com https://cdn.jsdelivr.net"
+  },
   "background": {
     "service_worker": "serviceWorker.js",
     "type": "module"
