@@ -64,12 +64,23 @@ export class RagEngine {
   /**
    * Ensure all documents have embeddings, generating them if needed
    */
-  private async ensureEmbeddings(docs: RagSource[]): Promise<void> {
-    for (const doc of docs) {
-      if (!doc.embedding) {
-        // Generate and cache embedding
-        doc.embedding = await generateEmbedding(doc.content, this.apiKey);
-      }
+  private async ensureEmbeddings(docs: RagSource[], concurrency = 5): Promise<void> {
+    const docsNeedingEmbeddings = docs.filter((doc) => !doc.embedding);
+
+    // Process in batches to respect rate limits
+    for (let i = 0; i < docsNeedingEmbeddings.length; i += concurrency) {
+      const batch = docsNeedingEmbeddings.slice(i, i + concurrency);
+      
+      await Promise.all(
+        batch.map(async (doc) => {
+          try {
+            doc.embedding = await generateEmbedding(doc.content, this.apiKey);
+          } catch (error) {
+            console.error(`Failed to generate embedding for doc ${doc.id}:`, error);
+            // Continue with other docs even if one fails
+          }
+        })
+      );
     }
   }
 
