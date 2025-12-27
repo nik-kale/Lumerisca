@@ -53,7 +53,7 @@ export interface RoutingResult {
 /**
  * Model registry with capabilities
  */
-const MODEL_REGISTRY: ModelCapabilities[] = [
+export const MODEL_REGISTRY: ModelCapabilities[] = [
   // OpenAI Models
   {
     provider: "openai",

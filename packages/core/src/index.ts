@@ -252,3 +252,9 @@ export type {
   RoutingOptions,
   RoutingResult,
 } from "./models/modelRouter.js";
+export {
+  ModelRegistry,
+  modelRegistry,
+} from "./models/modelRegistry.js";
+export type { ModelRegistryConfig } from "./models/modelRegistry.js";
+
