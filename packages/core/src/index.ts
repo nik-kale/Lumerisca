@@ -89,6 +89,8 @@ export {
   logPerformanceSummary,
 } from "./utils/performance.js";
 export type { PerformanceMetric } from "./utils/performance.js";
+export { debugCollector, DebugCollector } from "./utils/debugCollector.js";
+export type { DebugEvent } from "./utils/debugCollector.js";
 
 // Media Processing
 export {
