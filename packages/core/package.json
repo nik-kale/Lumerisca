@@ -40,5 +40,7 @@
     "vitest": "^1.2.0",
     "@vitest/coverage-v8": "^1.2.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "idb": "^7.1.1"
+  }
 }

@@ -2,6 +2,7 @@ import type { PageContext, PageMap, RagSource, RagResult } from "../types.js";
 import { resolvePageSources } from "../mapping/pageMapper.js";
 import { cosineSimilarity, generateEmbedding } from "./embeddings.js";
 import { DocumentStore } from "./documentStore.js";
+import { EmbeddingCache, hashContent } from "./embeddingCache.js";
 
 /**
  * RAG Engine for context-aware document retrieval
@@ -9,10 +10,14 @@ import { DocumentStore } from "./documentStore.js";
 export class RagEngine {
   private documentStore: DocumentStore;
   private apiKey: string;
+  private embeddingCache: EmbeddingCache;
 
   constructor(documentStore: DocumentStore, apiKey: string) {
     this.documentStore = documentStore;
     this.apiKey = apiKey;
+    this.embeddingCache = new EmbeddingCache();
+    // Initialize cache asynchronously
+    this.embeddingCache.init().catch(err => console.error("Failed to init cache", err));
   }
 
   /**
@@ -74,7 +79,19 @@ export class RagEngine {
       await Promise.all(
         batch.map(async (doc) => {
           try {
-            doc.embedding = await generateEmbedding(doc.content, this.apiKey);
+            // Check cache first
+            const hash = hashContent(doc.content);
+            const cached = await this.embeddingCache.get(doc.id, hash);
+            
+            if (cached) {
+              doc.embedding = cached;
+            } else {
+              doc.embedding = await generateEmbedding(doc.content, this.apiKey);
+              // Cache the new embedding
+              if (doc.embedding) {
+                await this.embeddingCache.set(doc.id, hash, doc.embedding);
+              }
+            }
           } catch (error) {
             console.error(`Failed to generate embedding for doc ${doc.id}:`, error);
             // Continue with other docs even if one fails
