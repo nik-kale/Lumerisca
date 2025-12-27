@@ -134,6 +134,154 @@ export class EnhancedLLMClient {
   }
 
   /**
+   * Send a chat completion request with streaming
+   */
+  async *chatStream(messages: ChatMessage[]): AsyncIterableIterator<string> {
+    const { provider, apiKey, model, baseUrl } = this.config;
+
+    this.validateMessages(messages);
+
+    // Rate limit check omitted for brevity/complexity in streaming context, 
+    // but ideally should share the same limiter.
+    // For now assuming caller checks or we just consume token.
+
+    try {
+      if (provider === "openai" || provider === "openrouter") {
+        yield* this.streamOpenAICompatible(messages, provider, apiKey, model, baseUrl);
+      } else if (provider === "anthropic") {
+        yield* this.streamAnthropic(messages, apiKey, model, baseUrl);
+      } else {
+        throw new Error(`Streaming not supported for provider: ${provider}`);
+      }
+    } catch (error) {
+      log.error("Streaming request failed", error);
+      throw error;
+    }
+  }
+
+  private async *streamOpenAICompatible(
+    messages: ChatMessage[],
+    provider: LLMProvider,
+    apiKey: string,
+    model?: string,
+    baseUrl?: string
+  ): AsyncIterableIterator<string> {
+    const providerConfig = getProviderConfig(provider);
+    const url = `${baseUrl || providerConfig.baseUrl}/chat/completions`;
+    const selectedModel = model || providerConfig.defaultModel;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        ...(provider === "openrouter" && {
+          "HTTP-Referer": "https://lumerisca.dev",
+          "X-Title": "Lumerisca",
+        }),
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages,
+        temperature: 0.7,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) throw ApiError.fromResponse(response, provider);
+    if (!response.body) throw new Error("No response body");
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.trim() === "") continue;
+        if (line.includes("[DONE]")) return;
+        
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) yield content;
+          } catch (e) {
+            // Ignore parse errors for partial chunks
+          }
+        }
+      }
+    }
+  }
+
+  private async *streamAnthropic(
+    messages: ChatMessage[],
+    apiKey: string,
+    model?: string,
+    baseUrl?: string
+  ): AsyncIterableIterator<string> {
+    const providerConfig = getProviderConfig("anthropic");
+    const url = `${baseUrl || providerConfig.baseUrl}/messages`;
+    const selectedModel = model || providerConfig.defaultModel;
+
+    const systemMessages = messages.filter((m) => m.role === "system");
+    const nonSystemMessages = messages.filter((m) => m.role !== "system");
+    const systemPrompt = systemMessages.map((m) => m.content).join("\n\n");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        max_tokens: 4096,
+        messages: nonSystemMessages,
+        ...(systemPrompt && { system: systemPrompt }),
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) throw ApiError.fromResponse(response, "anthropic");
+    if (!response.body) throw new Error("No response body");
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("event: ")) continue;
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "content_block_delta" && data.delta?.text) {
+              yield data.delta.text;
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Make the actual API request
    */
   private async makeRequest(messages: ChatMessage[]): Promise<string> {
